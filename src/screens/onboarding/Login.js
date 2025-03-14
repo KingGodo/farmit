@@ -1,257 +1,337 @@
 import React, { useState } from 'react';
-import { View, TextInput, Text, Alert, TouchableOpacity, StyleSheet, Image, ActivityIndicator, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  Animated,
+  Dimensions
+} from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { width } = Dimensions.get('window');
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    // Simulate loading
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      navigation.replace('Home'); // Always navigate to Home
-    }, 1000);
+  // Animation values
+  const fadeAnim = useState(new Animated.Value(0))[0];
+  const translateY = useState(new Animated.Value(50))[0];
+
+  // Start entrance animation when component mounts
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    setLoading(true);
+
+    // Simulate API call delay
+    setTimeout(async () => {
+      if (email === 'king@gmail.com' && password === 'King@2001') {
+        try {
+          // Store user session
+          await AsyncStorage.setItem('userToken', 'dummy-auth-token');
+          await AsyncStorage.setItem('userEmail', email);
+          
+          // Navigate to Home screen
+          navigation.replace('Home');
+        } catch (error) {
+          Alert.alert('Error', 'Failed to save session');
+        }
+      } else {
+        Alert.alert('Error', 'Invalid email or password');
+      }
+      setLoading(false);
+    }, 1500);
+  };
+
+  const handleGoogleLogin = () => {
+    Alert.alert('Info', 'Google login integration coming soon!');
+  };
+
+  const handleFacebookLogin = () => {
+    Alert.alert('Info', 'Facebook login integration coming soon!');
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.container}>
-        <Text style={styles.farmItText}>
-          Farm<Text style={styles.italicText}>It</Text>
-        </Text>
-        <View style={styles.formContainer}>
-          <Text style={styles.signInText}>Sign In</Text>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
+      <Animated.View 
+        style={[
+          styles.content,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: translateY }]
+          }
+        ]}
+      >
+        {/* Logo and Welcome Text */}
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Ionicons name="leaf" size={50} color="#4a6c2f" />
+          </View>
+          <Text style={styles.welcomeText}>Welcome to Farmit</Text>
+          <Text style={styles.subtitle}>Login to access your farm dashboard</Text>
+        </View>
+
+        {/* Login Form */}
+        <View style={styles.form}>
           <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} style={styles.icon} />
+            <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Email"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
+              autoCapitalize="none"
               placeholderTextColor="#888"
             />
           </View>
+
           <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} style={styles.icon} />
+            <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Password"
-              secureTextEntry
               value={password}
               onChangeText={setPassword}
+              secureTextEntry={!showPassword}
               placeholderTextColor="#888"
             />
-          </View>
-
-          <View style={styles.rememberContainer}>
-            <TouchableOpacity onPress={() => setRememberMe(!rememberMe)} style={styles.checkbox}>
-              <View style={{
-                width: 20,
-                height: 20,
-                borderRadius: 4,
-                borderWidth: 1,
-                borderColor: 'gray',
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: rememberMe ? '#48bb78' : 'transparent',
-              }}>
-                {rememberMe && <Text style={{ color: 'white' }}>✔</Text>} 
-              </View>
-              <Text style={styles.rememberText}>Remember Me</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => Alert.alert("Forgot Password", "Link to reset password.")}>
-              <Text style={styles.forgotText}>Forgot Password?</Text>
+            <TouchableOpacity 
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.eyeIcon}
+            >
+              <Ionicons 
+                name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                size={20} 
+                color="#666" 
+              />
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={[styles.loginButton, isLoading && styles.disabledButton]}
+          <TouchableOpacity style={styles.forgotPassword}>
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
             onPress={handleLogin}
-            disabled={isLoading}
+            disabled={loading}
           >
-            {isLoading ? (
+            {loading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="white" />
-                <Text style={styles.buttonText}>Loading...</Text>
+                <Ionicons name="sync" size={24} color="white" style={styles.loadingIcon} />
               </View>
             ) : (
               <Text style={styles.loginButtonText}>Login</Text>
             )}
           </TouchableOpacity>
+        </View>
 
-          <View style={styles.orContainer}>
-            <View style={styles.orLine} />
-            <Text style={styles.orText}>or</Text>
-            <View style={styles.orLine} />
-          </View>
-
-          <View style={styles.socialContainer}>
-            <TouchableOpacity onPress={() => Alert.alert("Login with Google")} style={styles.socialButton}>
-              <Image source={{ uri: 'https://img.icons8.com/color/48/000000/google-logo.png' }} style={styles.socialIcon} />
-              <Text style={styles.socialText}>Google</Text>
+        {/* Social Login */}
+        <View style={styles.socialLogin}>
+          <Text style={styles.orText}>Or continue with</Text>
+          
+          <View style={styles.socialButtons}>
+            <TouchableOpacity 
+              style={styles.socialButton}
+              onPress={handleGoogleLogin}
+            >
+              <Ionicons name="logo-google" size={24} color="#DB4437" />
+              <Text style={styles.socialButtonText}>Google</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => Alert.alert("Login with Facebook")} style={styles.socialButton}>
-              <Image source={{ uri: 'https://img.icons8.com/color/48/000000/facebook-new.png' }} style={styles.socialIcon} />
-              <Text style={styles.socialText}>Facebook</Text>
-            </TouchableOpacity>
-          </View>
 
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerPromptText}>Do not have an Account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Registration')}>
-              <Text style={styles.registerText}>Register</Text>
+            <TouchableOpacity 
+              style={styles.socialButton}
+              onPress={handleFacebookLogin}
+            >
+              <Ionicons name="logo-facebook" size={24} color="#4267B2" />
+              <Text style={styles.socialButtonText}>Facebook</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </View>
-    </ScrollView>
+
+        {/* Register Link */}
+        <View style={styles.registerContainer}>
+          <Text style={styles.registerText}>Don't have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Registration')}>
+            <Text style={styles.registerLink}>Register</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
-    backgroundColor: '#f8f9fa', // Same as Registration
-  },
   container: {
     flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  logoContainer: {
+    width: 80,
+    height: 80,
+    backgroundColor: '#e8f5e9',
+    borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: 'white', // Same as Registration
-  },
-  farmItText: {
-    fontSize: 32,
-    fontWeight: '600',
     marginBottom: 20,
-    color: 'black',
   },
-  italicText: {
-    fontStyle: 'italic',
-    color: '#48bb78', // Same as Registration
+  welcomeText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: 10,
   },
-  formContainer: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: 'white', // Same as Registration
-    padding: 20,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+  subtitle: {
+    fontSize: 16,
+    color: '#7f8c8d',
+    textAlign: 'center',
   },
-  signInText: {
-    fontSize: 24,
-    fontWeight: '500',
-    marginBottom: 24,
-    textAlign: 'left',
+  form: {
+    marginBottom: 30,
   },
   inputContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    backgroundColor: '#f5f5f5', // Same as Registration input background
-    borderRadius: 10,
-    paddingHorizontal: 10,
+    marginBottom: 15,
+    paddingHorizontal: 15,
+    height: 55,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  inputIcon: {
+    marginRight: 10,
   },
   input: {
     flex: 1,
-    padding: 10,
-    backgroundColor: 'transparent', // Same as Registration
-    borderRadius: 8,
+    fontSize: 16,
+    color: '#2c3e50',
   },
-  icon: {
-    color: '#4a6c2f', // Same as Registration
-    marginRight: 10,
+  eyeIcon: {
+    padding: 5,
   },
-  rememberContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginBottom: 20,
   },
-  checkbox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  rememberText: {
-    color: 'gray',
-    marginLeft: 8,
-  },
-  forgotText: {
-    color: '#48bb78', // Same as Registration
-    marginLeft: 'auto',
+  forgotPasswordText: {
+    color: '#4a6c2f',
+    fontSize: 14,
   },
   loginButton: {
-    backgroundColor: '#48bb78', // Same as Registration
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+    backgroundColor: '#4a6c2f',
+    borderRadius: 12,
+    height: 55,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  loginButtonDisabled: {
+    backgroundColor: '#92ad7f',
   },
   loginButtonText: {
     color: 'white',
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-  disabledButton: {
-    backgroundColor: '#95a5a6', // Same as Registration
+    fontSize: 18,
+    fontWeight: '600',
   },
   loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  orContainer: {
-    flexDirection: 'row',
+  loadingIcon: {
+    transform: [{ rotate: '360deg' }],
+  },
+  socialLogin: {
     alignItems: 'center',
-    marginVertical: 16,
-  },
-  orLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#ccc',
+    marginBottom: 30,
   },
   orText: {
-    marginHorizontal: 8,
-    color: 'gray',
+    color: '#7f8c8d',
+    fontSize: 14,
+    marginBottom: 20,
   },
-  socialContainer: {
+  socialButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    width: '100%',
   },
   socialButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5', // Same as Registration input background
-    borderWidth: 0,
-    padding: 10,
-    borderRadius: 8,
-    width: '45%',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 15,
+    marginHorizontal: 10,
+    width: width * 0.4,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
-  socialIcon: {
-    width: 24,
-    height: 24,
-  },
-  socialText: {
-    marginLeft: 8,
+  socialButtonText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#2c3e50',
+    fontWeight: '500',
   },
   registerContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 16,
-  },
-  registerPromptText: {
-    color: 'black',
+    alignItems: 'center',
   },
   registerText: {
-    color: '#48bb78', // Same as Registration
+    fontSize: 16,
+    color: '#7f8c8d',
+  },
+  registerLink: {
+    fontSize: 16,
+    color: '#4a6c2f',
+    fontWeight: '600',
   },
 });
 

@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { View, TextInput, Text, TouchableOpacity, StyleSheet, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useNavigation } from '@react-navigation/native'; // Import the necessary navigation hook
 
 const Registration = () => {
+  const navigation = useNavigation(); // Add this line
   const [currentStep, setCurrentStep] = useState(1); // Renamed from 'step' to 'currentStep'
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -108,10 +110,8 @@ const Registration = () => {
         Alert.alert(
           "Registration Successful", 
           "Your information has been submitted and saved successfully.",
-          [{ text: "OK" }]
+          [{ text: "OK", onPress: () => navigation.navigate('Success') }] // Navigate to Success.js
         );
-        // Reset form or navigate to next screen
-        // navigation.navigate('Dashboard'); // Uncomment and replace with your next screen
       } catch (error) {
         Alert.alert("Error", "Failed to save farmer details.");
       }
@@ -559,8 +559,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: '#2c3e50',
   },
-  reviewItem: {
-    flexDirection: 'row',
+  reviewItem: {flexDirection: 'row',
     marginBottom: 8,
   },
   reviewLabel: {

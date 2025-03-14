@@ -12,7 +12,7 @@ const Welcome = ({ navigation }) => {
     }).start();
 
     const timer = setTimeout(() => {
-      navigation.replace('Login');
+      navigation.replace('Splashscreen');
     }, 4000);
 
     return () => clearTimeout(timer);

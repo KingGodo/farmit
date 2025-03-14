@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Splash from './src/screens/onboarding/Splash';
+import Splashscreen from './src/screens/onboarding/Splashscreen';
 import Welcome from './src/screens/onboarding/Welcome';
 import Login from './src/screens/onboarding/Login';
 import Home from './src/screens/Home';
@@ -21,7 +21,7 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Welcome" component={Welcome} />
-        <Stack.Screen name="Splash" component={Splash} />
+        <Stack.Screen name="Splashscreen" component={Splashscreen} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="Registration" component={Registration} />
